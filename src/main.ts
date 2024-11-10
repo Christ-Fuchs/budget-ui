@@ -10,6 +10,11 @@ import { registerLocaleData } from '@angular/common';
 import { PageTitleStrategy } from './app/shared/service/page-title-strategy.service';
 import AppComponent from './app/app.component';
 
+// Firebase und HTTP Interceptors Imports
+import { FIREBASE_OPTIONS } from '@angular/fire/compat';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { authInterceptor } from './app/shared/interceptor/auth.interceptor';
+
 if (environment.production) enableProdMode();
 
 registerLocaleData(locale);
@@ -21,6 +26,12 @@ bootstrapApplication(AppComponent, {
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     { provide: TitleStrategy, useClass: PageTitleStrategy },
     provideIonicAngular(),
-    provideRouter(appRoutes, withPreloading(PreloadAllModules))
+    provideRouter(appRoutes, withPreloading(PreloadAllModules)),
+
+    // Neuer Firebase Provider
+    { provide: FIREBASE_OPTIONS, useValue: environment.firebaseConfig },
+
+    // Neuer HTTP Client Provider mit Auth Interceptor
+    provideHttpClient(withInterceptors([authInterceptor]))
   ]
 }).catch(err => console.error(err));
