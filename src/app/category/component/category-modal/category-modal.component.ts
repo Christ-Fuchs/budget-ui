@@ -11,7 +11,8 @@ import {
   IonItem,
   IonTitle,
   IonToolbar,
-  ModalController, ViewDidEnter
+  ModalController,
+  ViewDidEnter
 } from '@ionic/angular/standalone';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { addIcons } from 'ionicons';
