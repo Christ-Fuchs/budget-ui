@@ -25,7 +25,9 @@ import {
   IonTitle,
   IonToolbar,
   ModalController,
-  ViewDidEnter
+  ViewDidEnter,
+  InfiniteScrollCustomEvent,
+  RefresherCustomEvent
 } from '@ionic/angular/standalone';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common'; // Sicherstellen, dass CommonModule importiert ist
@@ -101,7 +103,7 @@ export default class CategoryListComponent implements ViewDidEnter {
     });
     modal.present();
     const { role } = await modal.onWillDismiss();
-    console.log('role', role, 'category:', category);
+    if (role === 'refresh') this.reloadCategories(); // Aktualisiert die Liste, falls ein Refresh angefordert wurde
   }
 
   private loadCategories(next?: () => void): void {
@@ -142,5 +144,17 @@ export default class CategoryListComponent implements ViewDidEnter {
 
   trackByCategoryId(index: number, category: Category): string {
     return <string>category.id;
+  }
+
+  // Methode zum Laden der nächsten Page: Load Next Category Page
+  loadNextCategoryPage($event: InfiniteScrollCustomEvent): void {
+    this.searchCriteria.page++;
+    this.loadCategories(() => $event.target.complete());
+  }
+
+  // Methode zum Neuladen der Kategorien mit dem Refresher
+  reloadCategories($event?: RefresherCustomEvent): void {
+    this.searchCriteria.page = 0; // Zurücksetzen auf die erste Seite
+    this.loadCategories(() => $event?.target.complete()); // Beendet das Refresher-Event nach dem Laden
   }
 }

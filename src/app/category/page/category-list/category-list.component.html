@@ -4,7 +4,7 @@
 <ion-header>
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-menu-button/>
+      <ion-menu-button></ion-menu-button>
     </ion-buttons>
     <ion-title>Categories</ion-title>
   </ion-toolbar>
@@ -18,12 +18,22 @@
 <!-- Content -->
 <!-- ------- -->
 <ion-content>
+  <!-- Refresher -->
+  <ion-refresher slot="fixed" (ionRefresh)="reloadCategories($event)" [disabled]="loading">
+    <ion-refresher-content
+      pullingIcon="chevron-down-circle-outline"
+      pullingText="Pull to refresh"
+      refreshingSpinner="circles"
+      refreshingText="Refreshing...">
+    </ion-refresher-content>
+  </ion-refresher>
+
   <ion-grid class="ion-padding">
     <!-- Search & Sort -->
     <ion-row>
       <ion-col size="12" size-sm="6">
         <ion-item>
-          <ion-icon name="swap-vertical" slot="start"/>
+          <ion-icon name="swap-vertical" slot="start"></ion-icon>
           <ion-select interface="popover">
             <ion-select-option> Name (A-Z) </ion-select-option>
             <ion-select-option> Name (Z-A) </ion-select-option>
@@ -34,8 +44,8 @@
       </ion-col>
       <ion-col size="12" size-sm="6">
         <ion-item>
-          <ion-icon name="search" slot="start"/>
-          <ion-input maxlength="40" placeholder="Search" [clearInput]="true"/>
+          <ion-icon name="search" slot="start"></ion-icon>
+          <ion-input maxlength="40" placeholder="Search" [clearInput]="true"></ion-input>
         </ion-item>
       </ion-col>
     </ion-row>
@@ -74,10 +84,15 @@
     </ion-row>
   </ion-grid>
 
+  <!-- Infinite Scroll -->
+  <ion-infinite-scroll [disabled]="lastPageReached || loading" (ionInfinite)="loadNextCategoryPage($event)">
+    <ion-infinite-scroll-content></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+
   <!-- Create Button -->
   <ion-fab slot="fixed" vertical="bottom" horizontal="end">
     <ion-fab-button (click)="openModal()">
-      <ion-icon name="add"/>
+      <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 </ion-content>
