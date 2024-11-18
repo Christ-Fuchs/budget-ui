@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import {
+  InfiniteScrollCustomEvent,
   IonButtons,
   IonCol,
   IonContent,
@@ -25,19 +26,19 @@ import {
   IonTitle,
   IonToolbar,
   ModalController,
+  RefresherCustomEvent,
   ViewDidEnter,
-  InfiniteScrollCustomEvent,
-  RefresherCustomEvent
+  ViewDidLeave
 } from '@ionic/angular/standalone';
-import { ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms'; // inklusive NonNullableFormBuilder.
 import { CommonModule } from '@angular/common'; // Sicherstellen, dass CommonModule importiert ist
 import { addIcons } from 'ionicons';
 import { add, alertCircleOutline, search, swapVertical } from 'ionicons/icons';
 import CategoryModalComponent from '../../component/category-modal/category-modal.component';
 import { CategoryService } from '../../service/category.service';
 import { ToastService } from '../../../shared/service/toast.service';
-import { Category, CategoryCriteria } from '../../../shared/domain';
-import { finalize } from 'rxjs';
+import { Category, CategoryCriteria, SortOption } from '../../../shared/domain'; // inklusive SortOption importiert
+import { debounce, finalize, interval, Subscription } from 'rxjs'; // inklusive Subscription.
 
 @Component({
   selector: 'app-category-list',
@@ -74,11 +75,12 @@ import { finalize } from 'rxjs';
     IonFabButton
   ]
 })
-export default class CategoryListComponent implements ViewDidEnter {
+export default class CategoryListComponent implements ViewDidEnter, ViewDidLeave {
   // Dependency Injection (DI)
   private readonly categoryService = inject(CategoryService);
   private readonly modalCtrl = inject(ModalController);
   private readonly toastService = inject(ToastService);
+  private readonly formBuilder = inject(NonNullableFormBuilder); // NonNullableFormBuilder hinzugefügt
 
   // Eigenschaften
   categories: Category[] | null = null;
@@ -87,13 +89,39 @@ export default class CategoryListComponent implements ViewDidEnter {
   loading = false;
   searchCriteria: CategoryCriteria = { page: 0, size: 25, sort: this.initialSort };
 
+  // Suchfeld Eigenschaften Variablen definieren
+  private searchFormSubscription?: Subscription; // Subscription für das Suchformular hinzugefügt
+  readonly sortOptions: SortOption[] = [
+    { label: 'Created at (newest first)', value: 'createdAt,desc' },
+    { label: 'Created at (oldest first)', value: 'createdAt,asc' },
+    { label: 'Name (A-Z)', value: 'name,asc' },
+    { label: 'Name (Z-A)', value: 'name,desc' }
+  ]; // Sortieroptionen hinzugefügt
+
+  readonly searchForm = this.formBuilder.group({
+    name: [''], // Suchfeld
+    sort: [this.initialSort] // Standardsortierung
+  }); // Suchformular hinzugefügt
+
   constructor() {
     // Add all used Ionic icons
     addIcons({ swapVertical, search, alertCircleOutline, add });
   }
 
   ionViewDidEnter(): void {
-    this.loadCategories();
+    // Abonnement für das Suchformular
+    this.searchFormSubscription = this.searchForm.valueChanges
+      .pipe(debounce(searchParams => interval(searchParams.name?.length ? 400 : 0)))
+      .subscribe(searchParams => {
+        this.searchCriteria = { ...this.searchCriteria, ...searchParams, page: 0 };
+        this.loadCategories();
+      });
+  }
+
+  ionViewDidLeave(): void {
+    // Abonnement des Suchformulars aufräumen
+    this.searchFormSubscription?.unsubscribe();
+    this.searchFormSubscription = undefined;
   }
 
   async openModal(category?: Category): Promise<void> {
@@ -137,6 +165,7 @@ export default class CategoryListComponent implements ViewDidEnter {
         }
       });
   }
+
   // Track-By Funktionen
   trackByFn(index: number): number {
     return index;

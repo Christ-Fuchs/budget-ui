@@ -28,17 +28,16 @@
     </ion-refresher-content>
   </ion-refresher>
 
-  <ion-grid class="ion-padding">
-    <!-- Search & Sort -->
+  <!-- Search & Sort -->
+  <ion-grid class="ion-padding" [formGroup]="searchForm">
     <ion-row>
       <ion-col size="12" size-sm="6">
         <ion-item>
           <ion-icon name="swap-vertical" slot="start"></ion-icon>
-          <ion-select interface="popover">
-            <ion-select-option> Name (A-Z) </ion-select-option>
-            <ion-select-option> Name (Z-A) </ion-select-option>
-            <ion-select-option> Created at (newest first) </ion-select-option>
-            <ion-select-option> Created at (oldest first) </ion-select-option>
+          <ion-select interface="popover" formControlName="sort">
+            <ion-select-option *ngFor="let sortOption of sortOptions; trackBy: trackByFn" [value]="sortOption.value">
+              {{ sortOption.label }}
+            </ion-select-option>
           </ion-select>
         </ion-item>
       </ion-col>
