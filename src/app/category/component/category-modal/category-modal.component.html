@@ -11,8 +11,8 @@
       </ion-button>
     </ion-buttons>
 
-    <!-- Title -->
-    <ion-title>Add category</ion-title>
+    <!-- Dynamischer Titel -->
+    <ion-title>{{category.id ? 'Edit' : 'Add'}} category</ion-title>
 
     <!-- Save Button mit [disabled] Bedingung -->
     <ion-buttons slot="end">

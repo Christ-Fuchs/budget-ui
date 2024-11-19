@@ -124,10 +124,11 @@ export default class CategoryListComponent implements ViewDidEnter, ViewDidLeave
     this.searchFormSubscription = undefined;
   }
 
+  // Angepasste Methode mit Übergabe der Kategorie an das Modal
   async openModal(category?: Category): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: CategoryModalComponent,
-      componentProps: { category } // Übergebe die Kategorie als Eigenschaft an das Modal
+      componentProps: { category: category ?? {} } // Kategorie oder leeres Objekt übergeben
     });
     modal.present();
     const { role } = await modal.onWillDismiss();
