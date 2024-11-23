@@ -35,7 +35,7 @@ export class AuthService {
       next: next || (() => {}),
       error: error => this.handleLoginError(error)
     });
-  };
+  }
 
   private handleLoginError(error: firebase.auth.Error): void {
     // Ignore errors from closed login popups
@@ -52,5 +52,5 @@ export class AuthService {
         icon: 'alert-circle'
       })
       .then(toast => toast.present());
-  };
+  }
 }

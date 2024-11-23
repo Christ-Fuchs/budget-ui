@@ -109,6 +109,9 @@ export default class CategoryListComponent implements ViewDidEnter, ViewDidLeave
   }
 
   ionViewDidEnter(): void {
+    // Initiales Laden der Kategorien
+    this.loadCategories();
+
     // Abonnement für das Suchformular
     this.searchFormSubscription = this.searchForm.valueChanges
       .pipe(debounce(searchParams => interval(searchParams.name?.length ? 400 : 0)))

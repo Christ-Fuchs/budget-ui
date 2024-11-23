@@ -44,7 +44,7 @@
       <ion-col size="12" size-sm="6">
         <ion-item>
           <ion-icon name="search" slot="start"></ion-icon>
-          <ion-input maxlength="40" placeholder="Search" [clearInput]="true"></ion-input>
+          <ion-input maxlength="40" placeholder="Search" [clearInput]="true" formControlName="name"></ion-input>
         </ion-item>
       </ion-col>
     </ion-row>
@@ -84,7 +84,7 @@
   </ion-grid>
 
   <!-- Infinite Scroll -->
-  <ion-infinite-scroll [disabled]="lastPageReached || loading" (ionInfinite)="loadNextCategoryPage($event)">
+  <ion-infinite-scroll [disabled]="lastPageReached" (ionInfinite)="loadNextCategoryPage($event)">
     <ion-infinite-scroll-content></ion-infinite-scroll-content>
   </ion-infinite-scroll>
 
