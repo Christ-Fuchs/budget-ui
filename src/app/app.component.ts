@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { addIcons } from 'ionicons';
 import { analytics, logOut, podium, pricetag } from 'ionicons/icons';
 import { categoriesPath } from './category/category.routes';
+import { expensesPath } from './expense/expense.routes';
 import { AsyncPipe } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
@@ -61,7 +62,10 @@ export default class AppComponent {
   // DI
   readonly authService = inject(AuthService);
 
-  readonly appPages = [{ title: 'Categories', url: `/${categoriesPath}`, icon: 'pricetag' }];
+  readonly appPages = [
+    { title: 'Expenses', url: `/${expensesPath}`, icon: 'podium' },
+    { title: 'Categories', url: `/${categoriesPath}`, icon: 'pricetag' }
+  ];
 
   constructor() {
     // Add all used Ionic icons

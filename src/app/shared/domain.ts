@@ -51,3 +51,31 @@ export interface CategoryCriteria extends PagingCriteria {
 export interface AllCategoryCriteria extends SortCriteria {
   name?: string;
 }
+
+// -------
+// Expense
+// -------
+
+export interface Expense {
+  id: string;
+  createdAt: string;
+  lastModifiedAt: string;
+  amount: number;
+  category: Category;
+  date: string;
+  name: string;
+}
+
+export interface ExpenseUpsertDto {
+  id?: string;
+  amount: number;
+  categoryId?: string;
+  date: string;
+  name: string;
+}
+
+export interface ExpenseCriteria extends PagingCriteria {
+  categoryIds?: string[];
+  name?: string;
+  yearMonth?: string;
+}
