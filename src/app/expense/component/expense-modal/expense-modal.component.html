@@ -1,1 +1,43 @@
-Expense Modal
+<!-- ------ -->
+<!-- Header -->
+<!-- ------ -->
+<ion-header>
+  <ion-toolbar>
+    <!-- Cancel Button -->
+    <ion-buttons slot="start">
+      <ion-button color="medium" (click)="cancel()">
+        <ion-icon slot="start" name="close" />
+        Cancel
+      </ion-button>
+    </ion-buttons>
+
+    <!-- Dynamischer Titel -->
+    <ion-title>{{expense.id ? 'Edit' : 'Add'}} expense</ion-title>
+
+    <!-- Save Button mit [disabled] Bedingung -->
+    <ion-buttons slot="end">
+      <ion-button (click)="save()" [disabled]="expenseForm.pristine || expenseForm.invalid">
+        <ion-icon slot="start" name="save"/>
+        Save
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<!-- ------- -->
+<!-- Content -->
+<!-- ------- -->
+<ion-content class="ion-padding" [formGroup]="expenseForm">
+  <!-- Input -->
+  <ion-item>
+    <ion-icon name="text" slot="start"/>
+    <ion-input #nameInput formControlName="name" maxlength="40" placeholder="Name" required="true"/>
+  </ion-item>
+
+  <!-- Delete Button -->
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="delete()" color="danger">
+      <ion-icon name="trash" />
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>
