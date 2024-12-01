@@ -46,7 +46,7 @@
       <ion-col size="12" size-sm="4">
         <ion-item>
           <ion-icon name="pricetag" slot="start"></ion-icon>
-          <ion-select interface="popover" formControlName="category">
+          <ion-select interface="popover" formControlName="category" placeholder="Category">
             <ion-select-option *ngFor="let category of categories; trackBy: trackByFn" [value]="category.id">
               {{ category.name }}
             </ion-select-option>

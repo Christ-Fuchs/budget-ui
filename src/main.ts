@@ -15,6 +15,19 @@ import { FIREBASE_OPTIONS } from '@angular/fire/compat';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './app/shared/interceptor/auth.interceptor';
 
+// Hinzufügen der Icon-Registrierung
+import { addIcons } from 'ionicons';
+import { add, arrowBack, arrowForward, chevronDownCircleOutline, search, swapVertical } from 'ionicons/icons';
+
+addIcons({
+  'arrow-back': arrowBack,
+  'arrow-forward': arrowForward,
+  'chevron-down-circle-outline': chevronDownCircleOutline,
+  'swap-vertical': swapVertical, // Sortier-Icon
+  search: search, // Such-Icon
+  add: add // Pluszeichen im blauen Kreis
+});
+
 if (environment.production) enableProdMode();
 
 registerLocaleData(locale);
