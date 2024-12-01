@@ -31,7 +31,8 @@
   <!-- Search & Sort -->
   <ion-grid class="ion-padding" [formGroup]="searchForm">
     <ion-row>
-      <ion-col size="12" size-sm="6">
+      <!-- Sort Options -->
+      <ion-col size="12" size-sm="4">
         <ion-item>
           <ion-icon name="swap-vertical" slot="start"></ion-icon>
           <ion-select interface="popover" formControlName="sort">
@@ -41,47 +42,45 @@
           </ion-select>
         </ion-item>
       </ion-col>
-      <ion-col size="12" size-sm="6">
+      <!-- Category Filter -->
+      <ion-col size="12" size-sm="4">
+        <ion-item>
+          <ion-icon name="pricetag" slot="start"></ion-icon>
+          <ion-select interface="popover" formControlName="category">
+            <ion-select-option *ngFor="let category of categories; trackBy: trackByFn" [value]="category.id">
+              {{ category.name }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ion-col>
+      <!-- Search Input -->
+      <ion-col size="12" size-sm="4">
         <ion-item>
           <ion-icon name="search" slot="start"></ion-icon>
           <ion-input maxlength="40" placeholder="Search" [clearInput]="true" formControlName="name"></ion-input>
         </ion-item>
       </ion-col>
     </ion-row>
-
-    <!-- Expense List -->
-    <ion-row>
-      <ion-col>
-        <ng-container [ngSwitch]="expenses?.length">
-          <!-- Skeleton -->
-          <ng-container *ngSwitchCase="null">
-            <ng-container *ngFor="let i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; trackBy: trackByFn">
-              <ion-item>
-                <ion-label>
-                  <ion-skeleton-text [animated]="true" style="width: 80px"></ion-skeleton-text>
-                </ion-label>
-              </ion-item>
-            </ng-container>
-          </ng-container>
-
-          <!-- Empty List -->
-          <ng-container *ngSwitchCase="0">
-            <ion-item>
-              <ion-icon slot="start" name="alert-circle-outline"></ion-icon>
-              <ion-label> No expenses found </ion-label>
-            </ion-item>
-          </ng-container>
-
-          <!-- Expenses -->
-          <ng-container *ngSwitchDefault>
-            <ion-item *ngFor="let expense of expenses; trackBy: trackByExpenseId" button="true" [detail]="true" (click)="openModal(expense)">
-              <ion-label> {{ expense.name }} </ion-label>
-            </ion-item>
-          </ng-container>
-        </ng-container>
-      </ion-col>
-    </ion-row>
   </ion-grid>
+
+  <!-- Expense List -->
+  <ion-list>
+    <ion-item-group *ngFor="let dateGroup of expenseGroups; trackBy: trackByDateGroup">
+      <!-- Date Divider -->
+      <ion-item-divider>
+        <ion-label>{{ dateGroup.date | date: 'dd.MM.yyyy' }}</ion-label>
+      </ion-item-divider>
+      <!-- Expenses -->
+      <ion-item *ngFor="let expense of dateGroup.expenses; trackBy: trackByExpenseId" button="true" [detail]="true"
+                (click)="openModal(expense)">
+        <ion-label>
+          <h2>{{ expense.name }}</h2>
+          <p>{{ expense.category.name }}</p>
+        </ion-label>
+        <ion-note slot="end">{{ expense.amount | currency: 'CHF' }}</ion-note>
+      </ion-item>
+    </ion-item-group>
+  </ion-list>
 
   <!-- Infinite Scroll -->
   <ion-infinite-scroll [disabled]="lastPageReached" (ionInfinite)="loadNextExpensePage($event)">
@@ -95,3 +94,25 @@
     </ion-fab-button>
   </ion-fab>
 </ion-content>
+
+<!-- ------- -->
+<!-- Footer -->
+<!-- ------- -->
+<ion-footer>
+  <ion-toolbar>
+    <!-- Previous Month Button -->
+    <ion-buttons slot="start">
+      <ion-button (click)="addMonths(-1)">
+        <ion-icon name="arrow-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <!-- Current Date -->
+    <ion-title>{{ currentDate | date: 'MMMM yyyy' }}</ion-title>
+    <!-- Next Month Button -->
+    <ion-buttons slot="end">
+      <ion-button (click)="addMonths(1)">
+        <ion-icon name="arrow-forward"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-footer>

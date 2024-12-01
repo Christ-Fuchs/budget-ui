@@ -1,11 +1,13 @@
 import { Component, inject } from '@angular/core';
 import {
   InfiniteScrollCustomEvent,
+  IonButton,
   IonButtons,
   IonCol,
   IonContent,
   IonFab,
   IonFabButton,
+  IonFooter,
   IonGrid,
   IonHeader,
   IonIcon,
@@ -13,16 +15,18 @@ import {
   IonInfiniteScrollContent,
   IonInput,
   IonItem,
+  IonItemDivider,
+  IonItemGroup,
   IonLabel,
   IonList,
   IonMenuButton,
+  IonNote,
   IonProgressBar,
   IonRefresher,
   IonRefresherContent,
   IonRow,
   IonSelect,
   IonSelectOption,
-  IonSkeletonText,
   IonTitle,
   IonToolbar,
   ModalController,
@@ -30,89 +34,94 @@ import {
   ViewDidEnter,
   ViewDidLeave
 } from '@ionic/angular/standalone';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms'; // inklusive NonNullableFormBuilder.
-import { CommonModule } from '@angular/common'; // Sicherstellen, dass CommonModule importiert ist
-import { addIcons } from 'ionicons';
-import { add, alertCircleOutline, search, swapVertical } from 'ionicons/icons';
-import ExpenseModalComponent from '../../component/expense-modal/expense-modal.component';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { ExpenseService } from '../../service/expense.service';
+import ExpenseModalComponent from '../../component/expense-modal/expense-modal.component';
 import { ToastService } from '../../../shared/service/toast.service';
-import { Expense, ExpenseCriteria, SortOption } from '../../../shared/domain'; // inklusive SortOption importiert
-import { debounce, finalize, interval, Subscription } from 'rxjs'; // inklusive Subscription.
+import { CategoryService } from '../../../category/service/category.service';
+import { Category, Expense, ExpenseCriteria, SortOption } from '../../../shared/domain';
+import { debounce, finalize, interval, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-expense-list',
   templateUrl: './expense-list.component.html',
   standalone: true,
   imports: [
+    CommonModule,
+    ExpenseModalComponent,
     ReactiveFormsModule,
-    CommonModule, // Hier korrekt hinzugefügt
 
     // Ionic
-    IonHeader,
-    IonToolbar,
     IonButtons,
-    IonMenuButton,
-    IonTitle,
-    IonProgressBar,
-    IonContent,
-    IonRefresher,
-    IonRefresherContent,
-    IonGrid,
-    IonRow,
+    IonButton,
     IonCol,
-    IonList,
-    IonItem,
+    IonContent,
+    IonFab,
+    IonFabButton,
+    IonFooter,
+    IonGrid,
+    IonHeader,
     IonIcon,
-    IonSelect,
-    IonSelectOption,
-    IonInput,
-    IonLabel,
-    IonSkeletonText,
     IonInfiniteScroll,
     IonInfiniteScrollContent,
-    IonFab,
-    IonFabButton
+    IonInput,
+    IonItem,
+    IonItemDivider,
+    IonItemGroup,
+    IonLabel,
+    IonList,
+    IonMenuButton,
+    IonNote,
+    IonProgressBar,
+    IonRefresher,
+    IonRefresherContent,
+    IonRow,
+    IonSelect,
+    IonSelectOption,
+    IonTitle,
+    IonToolbar
   ]
 })
 export default class ExpenseListComponent implements ViewDidEnter, ViewDidLeave {
-  // Dependency Injection (DI)
+  // Services
   private readonly expenseService = inject(ExpenseService);
+  private readonly categoryService = inject(CategoryService);
   private readonly modalCtrl = inject(ModalController);
   private readonly toastService = inject(ToastService);
-  private readonly formBuilder = inject(NonNullableFormBuilder); // NonNullableFormBuilder hinzugefügt
+  private readonly formBuilder = inject(NonNullableFormBuilder);
 
   // Eigenschaften
-  expenses: Expense[] | null = null;
-  readonly initialSort = 'name,asc';
+  currentDate = new Date(); // Für die Monatsnavigation
+  expenses: Expense[] | null = null; // Dynamische Expenses
+  categories: Category[] = []; // Dynamische Kategorien
+  expenseGroups: { date: Date; expenses: Expense[] }[] = []; // Gruppierte Ausgaben nach Datum
   lastPageReached = false;
   loading = false;
-  searchCriteria: ExpenseCriteria = { page: 0, size: 25, sort: this.initialSort };
 
-  // Suchfeld Eigenschaften Variablen definieren
-  private searchFormSubscription?: Subscription; // Subscription für das Suchformular hinzugefügt
+  // Suchkriterien und Subscription
+  searchCriteria: ExpenseCriteria = { page: 0, size: 25, sort: 'date,desc' };
+  private searchFormSubscription?: Subscription;
+
+  // Sortier- und Suchoptionen
   readonly sortOptions: SortOption[] = [
-    { label: 'Created at (newest first)', value: 'createdAt,desc' },
-    { label: 'Created at (oldest first)', value: 'createdAt,asc' },
+    { label: 'Created at (newest first)', value: 'createdAt,desc' }, // Neue Option
+    { label: 'Created at (oldest first)', value: 'createdAt,asc' }, // Neue Option
+    { label: 'Date (newest first)', value: 'date,desc' },
+    { label: 'Date (oldest first)', value: 'date,asc' },
     { label: 'Name (A-Z)', value: 'name,asc' },
     { label: 'Name (Z-A)', value: 'name,desc' }
-  ]; // Sortieroptionen hinzugefügt
+  ];
 
   readonly searchForm = this.formBuilder.group({
-    name: [''], // Suchfeld
-    sort: [this.initialSort] // Standardsortierung
-  }); // Suchformular hinzugefügt
-
-  constructor() {
-    // Add all used Ionic icons
-    addIcons({ swapVertical, search, alertCircleOutline, add });
-  }
+    name: [''],
+    sort: ['date,desc'],
+    category: ['']
+  });
 
   ionViewDidEnter(): void {
-    // Initiales Laden der Kategorien
-    this.loadExpenses();
-
-    // Abonnement für das Suchformular
+    this.loadCategories(); // Dynamische Kategorien laden
+    this.loadExpenses(); // Initiales Laden der Expenses
     this.searchFormSubscription = this.searchForm.valueChanges
       .pipe(debounce(searchParams => interval(searchParams.name?.length ? 400 : 0)))
       .subscribe(searchParams => {
@@ -122,32 +131,24 @@ export default class ExpenseListComponent implements ViewDidEnter, ViewDidLeave 
   }
 
   ionViewDidLeave(): void {
-    // Abonnement des Suchformulars aufräumen
     this.searchFormSubscription?.unsubscribe();
     this.searchFormSubscription = undefined;
   }
 
-  // Angepasste Methode mit Übergabe der Kategorie an das Modal
-  async openModal(expense?: Expense): Promise<void> {
-    const modal = await this.modalCtrl.create({
-      component: ExpenseModalComponent,
-      componentProps: { expense: expense ?? {} } // Kategorie oder leeres Objekt übergeben
-    });
-    modal.present();
-    const { role } = await modal.onWillDismiss();
-    if (role === 'refresh') this.reloadExpenses(); // Aktualisiert die Liste, falls ein Refresh angefordert wurde
+  addMonths(months: number): void {
+    this.currentDate.setMonth(this.currentDate.getMonth() + months);
   }
 
-  private loadExpenses(next?: () => void): void {
+  private loadCategories(next?: () => void): void {
     // Überprüft, ob ein Name-Filter vorhanden ist
     if (!this.searchCriteria.name) delete this.searchCriteria.name;
 
     // Setzt den Ladezustand auf `true`
     this.loading = true;
 
-    // Ruft Expenses vom Service ab
-    this.expenseService
-      .getExpenses(this.searchCriteria)
+    // Ruft Kategorien vom Service ab
+    this.categoryService
+      .getCategories(this.searchCriteria)
       .pipe(
         finalize(() => {
           this.loading = false; // Setzt den Ladezustand auf `false`
@@ -155,31 +156,72 @@ export default class ExpenseListComponent implements ViewDidEnter, ViewDidLeave 
         })
       )
       .subscribe({
-        next: expenses => {
+        next: categories => {
           // Initialisiert die Kategorienliste bei der ersten Seite oder falls sie `null` ist
-          if (this.searchCriteria.page === 0 || !this.expenses) this.expenses = [];
+          if (this.searchCriteria.page === 0 || !this.categories) this.categories = [];
           // Fügt die geladenen Kategorien zur bestehenden Liste hinzu
-          this.expenses.push(...expenses.content);
+          this.categories.push(...categories.content);
           // Prüft, ob die letzte Seite erreicht wurde
-          this.lastPageReached = expenses.last;
+          this.lastPageReached = categories.last;
         },
         error: error => {
           // Zeigt eine Warnung an, falls die Kategorien nicht geladen werden können
-          this.toastService.displayWarningToast('Could not load expenses', error);
+          this.toastService.displayWarningToast('Could not load categories', error);
         }
       });
   }
 
-  // Track-By Funktionen
-  trackByFn(index: number): number {
-    return index;
+  private loadExpenses(next?: () => void): void {
+    this.loading = true;
+    this.expenseService
+      .getExpenses(this.searchCriteria)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: expenses => {
+          this.expenseGroups = this.groupExpensesByDate(expenses.content);
+          this.lastPageReached = expenses.last;
+          if (next) next();
+        },
+        error: error => this.toastService.displayWarningToast('Could not load expenses', error)
+      });
+  }
+
+  private groupExpensesByDate(expenses: Expense[]): { date: Date; expenses: Expense[] }[] {
+    const groups: { [key: string]: Expense[] } = {};
+    for (const expense of expenses) {
+      const dateKey = new Date(expense.date).toISOString().split('T')[0];
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(expense);
+    }
+    return Object.keys(groups).map(date => ({
+      date: new Date(date),
+      expenses: groups[date]
+    }));
+  }
+
+  trackByFn<T extends { id?: string; value?: string }>(index: number, item: T): string | null {
+    return item?.id ?? item?.value ?? null;
+  }
+
+  trackByDateGroup(index: number, group: { date: Date; expenses: Expense[] }): string {
+    return group.date.toISOString();
   }
 
   trackByExpenseId(index: number, expense: Expense): string {
-    return <string>expense.id;
+    return expense.id;
   }
 
-  // Methode zum Laden der nächsten Page: Load Next Expense Page
+  async openModal(expense?: Expense): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: ExpenseModalComponent,
+      componentProps: { expense: expense ?? {} }
+    });
+    await modal.present();
+    const { role } = await modal.onWillDismiss();
+    if (role === 'refresh') this.loadExpenses();
+  }
+
+  // Methode zum Laden der nächsten Page: Load Next Category Page
   loadNextExpensePage($event: InfiniteScrollCustomEvent): void {
     this.searchCriteria.page++;
     this.loadExpenses(() => $event.target.complete());
